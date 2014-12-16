@@ -13,7 +13,8 @@ define nodejs::npm (
   $version     = undef,
   $source      = undef,
   $install_opt = undef,
-  $remove_opt  = undef
+  $remove_opt  = undef,
+  $environment = []
 ) {
   include nodejs
 
@@ -37,22 +38,24 @@ define nodejs::npm (
 
   if $ensure == present {
     exec { "npm_install_${name}":
-      command => "npm install ${install_opt} ${install_pkg}",
-      unless  => "npm list -p -l | grep '${validate}'",
-      cwd     => $npm_dir,
-      path    => $::path,
-      require => Class['nodejs'],
+      command     => "npm install ${install_opt} ${install_pkg}",
+      unless      => "npm list -p -l | grep '${validate}'",
+      cwd         => $npm_dir,
+      path        => $::path,
+      environment => $environment,
+      require     => Class['nodejs'],
     }
 
     # Conditionally require npm_proxy only if resource exists.
     Exec<| title=='npm_proxy' |> -> Exec["npm_install_${name}"]
   } else {
     exec { "npm_remove_${name}":
-      command => "npm remove ${npm_pkg}",
-      onlyif  => "npm list -p -l | grep '${validate}'",
-      cwd     => $npm_dir,
-      path    => $::path,
-      require => Class['nodejs'],
+      command     => "npm remove ${npm_pkg}",
+      onlyif      => "npm list -p -l | grep '${validate}'",
+      cwd         => $npm_dir,
+      path        => $::path,
+      environment => $environment,
+      require     => Class['nodejs'],
     }
   }
 }
